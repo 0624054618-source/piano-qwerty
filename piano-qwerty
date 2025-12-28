@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Piano Real QWERTY</title>
+<style>
+body{background:#111;display:flex;justify-content:center;margin:0;padding:20px}
+#piano{position:relative;display:flex;gap:2px}
+.white{width:18px;height:70px;background:white;border:1px solid #000;font-size:10px;text-align:center;cursor:pointer}
+.black{position:absolute;width:12px;height:40px;background:black;color:white;font-size:9px;text-align:center;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div id="piano"></div>
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const ctx = new AudioCtx();
+
+let sample;
+fetch("C4.mp3")
+.then(r=>r.arrayBuffer())
+.then(b=>ctx.decodeAudioData(b))
+.then(s=>sample=s);
+
+function play(midi){
+  if(!sample) return;
+  const src=ctx.createBufferSource();
+  src.buffer=sample;
+  src.playbackRate.value=Math.pow(2,(midi-60)/12);
+  src.connect(ctx.destination);
+  src.start();
+}
+
+const keys=['1','2','3','4','5','6','7','8','9','0'];
+let midi=60;
+
+keys.forEach((k,i)=>{
+  const w=document.createElement('div');
+  w.className='white';
+  w.textContent=k;
+  w.onclick=()=>play(midi);
+  document.getElementById('piano').appendChild(w);
+
+  if(![2,6].includes(i)){
+    const b=document.createElement('div');
+    b.className='black';
+    b.style.left=(i*20+14)+'px';
+    b.textContent='▲';
+    b.onclick=()=>play(midi+1);
+    document.getElementById('piano').appendChild(b);
+  }
+  midi+= [2,2,1,2,2,2,1][i%7];
+});
+
+window.addEventListener('keydown',e=>{
+  const i=keys.indexOf(e.key);
+  if(i>=0) play(60+i*2);
+});
+</script>
+
+</body>
+</html>
